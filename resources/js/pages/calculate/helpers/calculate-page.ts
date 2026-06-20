@@ -12,9 +12,34 @@ export type EmployeeOption = {
     id: number;
     fullName: string;
     dailyRate: string;
+    monthlyRate: string;
     workDays: number[];
     schedule: EmployeeScheduleDay[];
 };
+
+export const SSS_BASE_SALARY = 5250;
+export const SSS_BASE_CONTRIBUTION = 250;
+export const SSS_INCREMENT_STEP = 500;
+export const SSS_INCREMENT_AMOUNT = 25;
+export const SSS_MAX_SALARY = 34750;
+export const SSS_MAX_CONTRIBUTION = 1750;
+
+export function sssContribution(monthlyRate: number | string | null): number {
+    const salary = typeof monthlyRate === 'number' ? monthlyRate : Number(monthlyRate ?? 0);
+
+    if (!Number.isFinite(salary) || salary === 0) {
+        return 0;
+    }
+
+    if (salary >= SSS_MAX_SALARY) {
+        return SSS_MAX_CONTRIBUTION;
+    }
+
+    const excess = Math.max(0, salary - SSS_BASE_SALARY);
+    const steps = Math.floor(excess / SSS_INCREMENT_STEP);
+
+    return SSS_BASE_CONTRIBUTION + (steps + 1) * SSS_INCREMENT_AMOUNT;
+}
 
 export type AttendanceCalendarRange =
     | 'wholeMonth'
@@ -42,6 +67,7 @@ export type ActiveDtr = {
     employeeId: number;
     month: number;
     year: number;
+    sssDeduction: string;
     entries: ActiveDtrEntry[];
 };
 

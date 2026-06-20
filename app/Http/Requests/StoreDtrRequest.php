@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -11,7 +12,7 @@ class StoreDtrRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, array<int, \Illuminate\Contracts\Validation\ValidationRule|string>|string>
+     * @return array<string, array<int, ValidationRule|string>|string>
      */
     public function rules(): array
     {
@@ -31,6 +32,7 @@ class StoreDtrRequest extends FormRequest
             'entries.*.base_rate' => ['nullable', 'numeric', 'min:0'],
             'entries.*.rate' => ['nullable', 'numeric', 'min:0'],
             'entries.*.is_absent' => ['sometimes', 'boolean'],
+            'sss_deduction' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
