@@ -35,12 +35,20 @@ class CalculateController extends Controller
 
     private const SSS_INCREMENT_AMOUNT = 25;
 
+    private const SSS_MAX_SALARY = 34750;
+
+    private const SSS_MAX_CONTRIBUTION = 1750;
+
     public static function sssContribution(float|string|null $monthlyRate): float
     {
         $salary = is_numeric($monthlyRate) ? (float) $monthlyRate : 0;
 
         if ($salary === 0.0) {
             return 0.0;
+        }
+
+        if ($salary >= self::SSS_MAX_SALARY) {
+            return (float) self::SSS_MAX_CONTRIBUTION;
         }
 
         $excess = max(0, $salary - self::SSS_BASE_SALARY);

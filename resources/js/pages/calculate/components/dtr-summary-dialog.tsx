@@ -20,6 +20,8 @@ import {
     SSS_BASE_CONTRIBUTION,
     SSS_INCREMENT_STEP,
     SSS_INCREMENT_AMOUNT,
+    SSS_MAX_SALARY,
+    SSS_MAX_CONTRIBUTION,
     formatRateAmount,
     getAttendanceCalendarRangeLabel,
     sssContribution,
@@ -67,6 +69,8 @@ export default function DtrSummaryDialog({
         let formula: string;
         if (salary < SSS_BASE_SALARY) {
             formula = `Monthly Rate: ${formatRateAmount(salary)}. Below ₱${SSS_BASE_SALARY.toLocaleString()}, flat rate of ${formatRateAmount(SSS_BASE_CONTRIBUTION)}.`;
+        } else if (salary >= SSS_MAX_SALARY) {
+            formula = `Monthly Rate: ${formatRateAmount(salary)}. At or above ₱${SSS_MAX_SALARY.toLocaleString()}, contribution is capped at ${formatRateAmount(SSS_MAX_CONTRIBUTION)}.`;
         } else {
             const excess = Math.max(0, salary - SSS_BASE_SALARY);
             const steps = Math.floor(excess / SSS_INCREMENT_STEP);
