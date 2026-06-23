@@ -106,6 +106,8 @@ export default function CalculatePageContent({
                             summary={attendance.dtrSummary}
                             sssOverride={attendance.manualSssOverride}
                             onSssOverrideChange={attendance.setManualSssOverride}
+                            pagibigOverride={attendance.manualPagibigOverride}
+                            onPagibigOverrideChange={attendance.setManualPagibigOverride}
                             monthlyRate={attendance.selectedEmployee?.monthlyRate ?? ''}
                             calendarRange={attendance.selectedCalendarRange}
                         />

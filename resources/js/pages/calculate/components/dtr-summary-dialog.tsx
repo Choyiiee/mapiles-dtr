@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 import {
+    PAGIBIG_FIXED_RATE,
     SSS_BASE_SALARY,
     SSS_BASE_CONTRIBUTION,
     SSS_INCREMENT_STEP,
@@ -24,6 +25,7 @@ import {
     SSS_MAX_CONTRIBUTION,
     formatRateAmount,
     getAttendanceCalendarRangeLabel,
+    pagibigContribution,
     sssContribution,
     type AttendanceCalendarRange,
 } from '../helpers/calculate-page';
@@ -37,6 +39,8 @@ type DtrSummaryDialogProps = {
     summary: DtrSummary;
     sssOverride: string;
     onSssOverrideChange: (value: string) => void;
+    pagibigOverride: string;
+    onPagibigOverrideChange: (value: string) => void;
     monthlyRate: string;
     calendarRange: AttendanceCalendarRange;
 };
@@ -49,11 +53,25 @@ export default function DtrSummaryDialog({
     summary,
     sssOverride,
     onSssOverrideChange,
+    pagibigOverride,
+    onPagibigOverrideChange,
     monthlyRate,
     calendarRange,
 }: DtrSummaryDialogProps) {
     const hasOvertime = summary.overtime.totalMinutes > 0;
     const hasMonthlyRate = monthlyRate.trim() !== '' && Number.isFinite(Number(monthlyRate));
+
+    function pagibigFormulaBreakdown(): string {
+        const isSemiMonthly = calendarRange !== 'wholeMonth';
+        const rangeLabel = isSemiMonthly
+            ? getAttendanceCalendarRangeLabel(calendarRange)
+            : '';
+        const total = pagibigContribution();
+        if (isSemiMonthly) {
+            return `Fixed rate of ${formatRateAmount(total)} per month. Divided by 2 for ${rangeLabel} period: ${formatRateAmount(summary.pagibigContribution)}.`;
+        }
+        return `Fixed rate of ${formatRateAmount(total)} per month.`;
+    }
 
     function sssFormulaBreakdown(): string {
         const salary = Number(monthlyRate);
@@ -241,6 +259,91 @@ export default function DtrSummaryDialog({
                         </div>
                     </div>
 
+                    <p className="mt-4 text-sm font-semibold text-foreground">
+                        Pag-IBIG deduction
+                    </p>
+
+                    <div className="mt-3 grid gap-3 md:grid-cols-4">
+                        <div className="rounded-lg border bg-background p-3">
+                            <p className="text-xs text-muted-foreground">
+                                Monthly rate
+                            </p>
+                            <p className="mt-0.5 font-medium text-foreground">
+                                {formatRateAmount(PAGIBIG_FIXED_RATE)}
+                            </p>
+                        </div>
+
+                        <div className="rounded-lg border bg-background p-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs text-muted-foreground">
+                                    Auto-computed Pag-IBIG
+                                </p>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5 shrink-0"
+                                        >
+                                            <Info className="h-3 w-3" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="bottom"
+                                        align="start"
+                                        className="max-w-xs text-xs"
+                                    >
+                                        {pagibigFormulaBreakdown()}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                            <p className="mt-0.5 font-medium text-foreground">
+                                {formatRateAmount(summary.pagibigContribution)}
+                            </p>
+                        </div>
+
+                        <div className="rounded-lg border bg-background p-3">
+                            <p className="text-xs text-muted-foreground">
+                                Override (optional)
+                            </p>
+                            <div className="mt-0.5">
+                                <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={pagibigOverride}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^\d+(\.\d{0,2})?$/.test(val)) {
+                                            onPagibigOverrideChange(val);
+                                        }
+                                    }}
+                                    className="h-8 w-full max-w-36 text-sm"
+                                    placeholder={`Auto: ${summary.pagibigDeductionLabel}`}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg border bg-background p-3">
+                            <p className="text-xs text-muted-foreground">
+                                Effective deduction
+                            </p>
+                            <p className="mt-0.5 font-semibold text-foreground">
+                                {summary.pagibigDeductionLabel}
+                            </p>
+                            {pagibigOverride.trim() !== '' && (
+                                <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
+                                    Auto: {formatRateAmount(summary.pagibigContribution)}
+                                    {Number(pagibigOverride) > summary.pagibigContribution
+                                        ? ' (higher)'
+                                        : Number(pagibigOverride) < summary.pagibigContribution && Number(pagibigOverride) >= 0
+                                            ? ' (lower)'
+                                            : ''}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="mt-3 rounded-lg border bg-primary/5 p-3">
                         <div className="flex items-baseline justify-between gap-4">
                             <div>
@@ -252,7 +355,7 @@ export default function DtrSummaryDialog({
                                 </p>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                {summary.totalAmountLabel} − {summary.sssDeductionLabel} SSS
+                                {summary.totalAmountLabel} − {summary.sssDeductionLabel} SSS − {summary.pagibigDeductionLabel} Pag-IBIG
                             </p>
                         </div>
                     </div>

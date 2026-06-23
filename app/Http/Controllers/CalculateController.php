@@ -39,6 +39,13 @@ class CalculateController extends Controller
 
     private const SSS_MAX_CONTRIBUTION = 1750;
 
+    private const PAGIBIG_FIXED_RATE = 200;
+
+    public static function pagibigContribution(): float
+    {
+        return (float) self::PAGIBIG_FIXED_RATE;
+    }
+
     public static function sssContribution(float|string|null $monthlyRate): float
     {
         $salary = is_numeric($monthlyRate) ? (float) $monthlyRate : 0;
@@ -127,7 +134,11 @@ class CalculateController extends Controller
             ? (float) $validated['sss_deduction']
             : 0.0;
 
-        DB::transaction(function () use ($calendarRange, $employee, $month, $request, $sssDeduction, $validated, $year): void {
+        $pagibigDeduction = is_numeric($validated['pagibig_deduction'] ?? null)
+            ? (float) $validated['pagibig_deduction']
+            : 0.0;
+
+        DB::transaction(function () use ($calendarRange, $employee, $month, $request, $sssDeduction, $pagibigDeduction, $validated, $year): void {
             Employee::query()->whereKey($employee->id)->lockForUpdate()->firstOrFail();
 
             $scheduleByDay = collect($this->storedSchedule($employee))->keyBy('day');
@@ -271,8 +282,9 @@ class CalculateController extends Controller
                 'total_overtime_minutes' => $totalOvertimeMinutes,
                 'total_overtime_amount' => $this->formatRate($totalOvertimeAmount),
                 'sss_deduction' => $this->formatRate($sssDeduction),
+                'pagibig_deduction' => $this->formatRate($pagibigDeduction),
                 'total_amount' => $this->formatRate(
-                    max(0, $regularAmount + $totalOvertimeAmount - $sssDeduction),
+                    max(0, $regularAmount + $totalOvertimeAmount - $sssDeduction - $pagibigDeduction),
                 ),
             ]);
             $dtr->save();
@@ -365,6 +377,9 @@ class CalculateController extends Controller
             'year' => $period['year'],
             'sssDeduction' => $dtr->sss_deduction !== null
                 ? (string) $dtr->sss_deduction
+                : '',
+            'pagibigDeduction' => $dtr->pagibig_deduction !== null
+                ? (string) $dtr->pagibig_deduction
                 : '',
             'entries' => $dtr->entries
                 ->map(fn ($entry) => [

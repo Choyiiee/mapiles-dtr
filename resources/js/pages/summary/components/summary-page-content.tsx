@@ -329,7 +329,7 @@ export default function SummaryPageContent({
                     deletingId={history.deletingDtrId}
                     open={history.isDetailsDialogOpen}
                     onDelete={history.deleteDtr}
-                    onExport={history.exportDtrAsCsv}
+                    onExport={history.exportDtrAsPdf}
                     onOpenChange={history.handleDetailsDialogChange}
                     onPrint={history.printDtr}
                     onReopen={history.reopenDtr}

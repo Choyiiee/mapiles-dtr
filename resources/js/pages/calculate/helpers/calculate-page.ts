@@ -24,6 +24,12 @@ export const SSS_INCREMENT_AMOUNT = 25;
 export const SSS_MAX_SALARY = 34750;
 export const SSS_MAX_CONTRIBUTION = 1750;
 
+export const PAGIBIG_FIXED_RATE = 200;
+
+export function pagibigContribution(): number {
+    return PAGIBIG_FIXED_RATE;
+}
+
 export function sssContribution(monthlyRate: number | string | null): number {
     const salary = typeof monthlyRate === 'number' ? monthlyRate : Number(monthlyRate ?? 0);
 
@@ -68,6 +74,7 @@ export type ActiveDtr = {
     month: number;
     year: number;
     sssDeduction: string;
+    pagibigDeduction: string;
     entries: ActiveDtrEntry[];
 };
 

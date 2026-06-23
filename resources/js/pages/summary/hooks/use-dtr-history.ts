@@ -141,7 +141,7 @@ export function useDtrHistory(dtrs: SummaryDtr[]) {
                         table { width: 100%; border-collapse: collapse; margin-top: 24px; }
                         th, td { border: 1px solid #d1d5db; padding: 10px; text-align: left; font-size: 14px; }
                         th { background: #f3f4f6; }
-                        .meta { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+                        .meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 20px; }
                         .meta-card { border: 1px solid #d1d5db; padding: 12px; border-radius: 8px; }
                         .label { color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
                         .value { margin-top: 6px; font-weight: 600; }
@@ -169,6 +169,14 @@ export function useDtrHistory(dtrs: SummaryDtr[]) {
                         <div class="meta-card">
                             <div class="label">Overtime pay</div>
                             <div class="value">${escapeHtml(formatRateAmount(dtr.totalOvertimeAmount))}</div>
+                        </div>
+                        <div class="meta-card" style="color:#dc2626;">
+                            <div class="label">SSS deduction</div>
+                            <div class="value">${escapeHtml(formatRateAmount(dtr.sssDeduction))}</div>
+                        </div>
+                        <div class="meta-card" style="color:#dc2626;">
+                            <div class="label">Pag-IBIG deduction</div>
+                            <div class="value">${escapeHtml(formatRateAmount(dtr.pagibigDeduction))}</div>
                         </div>
                         <div class="meta-card">
                             <div class="label">Total pay</div>
