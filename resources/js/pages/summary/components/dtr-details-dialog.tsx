@@ -106,6 +106,15 @@ export default function DtrDetailsDialog({
                         </p>
                     </div>
 
+                    <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+                        <p className="text-sm text-muted-foreground">
+                            Pag-IBIG deduction
+                        </p>
+                        <p className="mt-1 font-medium text-red-600">
+                            −{formatRateAmount(dtr.pagibigDeduction)}
+                        </p>
+                    </div>
+
                     <div className="rounded-lg border p-4">
                         <p className="text-sm text-muted-foreground">
                             Total pay

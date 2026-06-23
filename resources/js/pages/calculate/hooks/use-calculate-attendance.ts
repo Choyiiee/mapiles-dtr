@@ -24,6 +24,7 @@ import {
     getWorkedMinutes,
     isHalfDayTimeIn,
     monthOptions,
+    pagibigContribution,
     sssContribution,
     SSS_BASE_SALARY,
     SSS_BASE_CONTRIBUTION,
@@ -67,6 +68,9 @@ export type DtrSummary = {
     sssContribution: number;
     sssDeductionLabel: string;
     sssDeduction: number;
+    pagibigContribution: number;
+    pagibigDeductionLabel: string;
+    pagibigDeduction: number;
     netPay: number;
     netPayLabel: string;
     totalAmountLabel: string;
@@ -127,6 +131,14 @@ function initialSssOverride(activeDtr: ActiveDtr | null | undefined): string {
     }
 
     return activeDtr.sssDeduction;
+}
+
+function initialPagibigOverride(activeDtr: ActiveDtr | null | undefined): string {
+    if (!activeDtr || !activeDtr.pagibigDeduction) {
+        return '';
+    }
+
+    return activeDtr.pagibigDeduction;
 }
 
 function getHolidayAdjustmentLabel(holidayType: HolidayType): string {
@@ -196,6 +208,9 @@ export function useCalculateAttendance(
     >(null);
     const [manualSssOverride, setManualSssOverride] = useState<string>(
         () => initialSssOverride(activeDtr),
+    );
+    const [manualPagibigOverride, setManualPagibigOverride] = useState<string>(
+        () => initialPagibigOverride(activeDtr),
     );
 
     const selectedEmployee =
@@ -388,8 +403,20 @@ export function useCalculateAttendance(
     const sssDeduction = Number.isFinite(manualSss)
         ? manualSss
         : autoSss;
+
+    const fullMonthlyPagibig = pagibigContribution();
+    const autoPagibig = selectedCalendarRange !== 'wholeMonth'
+        ? fullMonthlyPagibig / 2
+        : fullMonthlyPagibig;
+    const manualPagibig = manualPagibigOverride.trim() !== ''
+        ? Number(manualPagibigOverride)
+        : NaN;
+    const pagibigDeduction = Number.isFinite(manualPagibig)
+        ? manualPagibig
+        : autoPagibig;
+
     const grossTotal = regularAmountTotal + overtimeSummary.totalAmount;
-    const netPay = Math.max(0, grossTotal - sssDeduction);
+    const netPay = Math.max(0, grossTotal - sssDeduction - pagibigDeduction);
 
     const dtrSummary: DtrSummary = {
         employeeName: selectedEmployee?.fullName ?? '',
@@ -404,6 +431,9 @@ export function useCalculateAttendance(
         sssContribution: autoSss,
         sssDeduction,
         sssDeductionLabel: formatRateAmount(sssDeduction),
+        pagibigContribution: autoPagibig,
+        pagibigDeduction,
+        pagibigDeductionLabel: formatRateAmount(pagibigDeduction),
         netPay,
         netPayLabel: formatRateAmount(netPay),
         totalAmountLabel: formatRateAmount(grossTotal),
@@ -607,6 +637,7 @@ export function useCalculateAttendance(
         setSelectedEmployeeId(value);
         setCurrentPage(1);
         setManualSssOverride('');
+        setManualPagibigOverride('');
         resetReviewState();
     };
 
@@ -679,6 +710,7 @@ export function useCalculateAttendance(
                 year: Number(selectedYear),
                 calendar_range: selectedCalendarRange,
                 sss_deduction: dtrSummary.sssDeduction,
+                pagibig_deduction: dtrSummary.pagibigDeduction,
                 ...(isEditingFromSummary ? { source: 'summary' } : {}),
                 entries: summaryEntryData.map((entry) => ({
                     date: entry.key,
@@ -719,6 +751,7 @@ export function useCalculateAttendance(
         isRateComputationDialogOpen: selectedRateComputation !== null,
         isSubmittingDtr,
         isSummaryDialogOpen,
+        manualPagibigOverride,
         manualSssOverride,
         monthDays,
         openRateComputation,
@@ -733,6 +766,7 @@ export function useCalculateAttendance(
         selectedPeriodLabel,
         selectedRateComputation,
         selectedYear,
+        setManualPagibigOverride,
         setManualSssOverride,
         startIndex,
         totalPages,

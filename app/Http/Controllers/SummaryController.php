@@ -48,6 +48,7 @@ class SummaryController extends Controller
                     'totalOvertimeMinutes' => (int) $dtr->total_overtime_minutes,
                     'totalOvertimeAmount' => $dtr->total_overtime_amount !== null ? (string) $dtr->total_overtime_amount : '0.00',
                     'sssDeduction' => $dtr->sss_deduction !== null ? (string) $dtr->sss_deduction : '0.00',
+                    'pagibigDeduction' => $dtr->pagibig_deduction !== null ? (string) $dtr->pagibig_deduction : '0.00',
                     'totalAmount' => $dtr->total_amount !== null ? (string) $dtr->total_amount : '0.00',
                     'confirmedAt' => ($dtr->updated_at ?? $dtr->created_at)?->toIso8601String(),
                     'entries' => $dtr->entries->map(function ($entry): array {
@@ -103,6 +104,8 @@ class SummaryController extends Controller
             'confirmedAt' => ($dtr->updated_at ?? $dtr->created_at)?->toISOString(),
             'totalOvertimeMinutes' => (int) $dtr->total_overtime_minutes,
             'totalOvertimeAmount' => $dtr->total_overtime_amount !== null ? (string) $dtr->total_overtime_amount : '0.00',
+            'sssDeduction' => $dtr->sss_deduction !== null ? (string) $dtr->sss_deduction : '0.00',
+            'pagibigDeduction' => $dtr->pagibig_deduction !== null ? (string) $dtr->pagibig_deduction : '0.00',
             'totalAmount' => $dtr->total_amount !== null ? (string) $dtr->total_amount : '0.00',
             'entries' => $dtr->entries->map(function ($entry): array {
                 $workDate = Carbon::parse($entry->work_date);

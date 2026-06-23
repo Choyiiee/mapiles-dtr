@@ -28,6 +28,7 @@ export type SummaryDtr = {
     totalOvertimeMinutes: number;
     totalOvertimeAmount: string;
     sssDeduction: string;
+    pagibigDeduction: string;
     totalAmount: string;
     confirmedAt: string | null;
     entries: SummaryDtrEntry[];

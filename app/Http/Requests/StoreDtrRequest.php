@@ -33,6 +33,7 @@ class StoreDtrRequest extends FormRequest
             'entries.*.rate' => ['nullable', 'numeric', 'min:0'],
             'entries.*.is_absent' => ['sometimes', 'boolean'],
             'sss_deduction' => ['nullable', 'numeric', 'min:0'],
+            'pagibig_deduction' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
