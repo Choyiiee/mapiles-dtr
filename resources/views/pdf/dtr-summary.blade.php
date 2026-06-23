@@ -90,11 +90,11 @@
         </div>
         <div class="meta-card">
             <div class="meta-label">SSS deduction</div>
-            <div class="meta-value" style="color:#dc2626;">−PHP {{ number_format((float) ($sssDeduction ?? 0), 2) }}</div>
+            <div class="meta-value" style="color:#dc2626;">-PHP {{ number_format((float) ($sssDeduction ?? 0), 2) }}</div>
         </div>
         <div class="meta-card">
             <div class="meta-label">Pag-IBIG deduction</div>
-            <div class="meta-value" style="color:#dc2626;">−PHP {{ number_format((float) ($pagibigDeduction ?? 0), 2) }}</div>
+            <div class="meta-value" style="color:#dc2626;">-PHP {{ number_format((float) ($pagibigDeduction ?? 0), 2) }}</div>
         </div>
         <div class="meta-card">
             <div class="meta-label">Total pay</div>
