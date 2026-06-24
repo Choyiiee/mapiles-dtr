@@ -23,6 +23,7 @@ import {
     getShiftDurationMinutes,
     getWorkedMinutes,
     isHalfDayTimeIn,
+    isHalfDayEarlyOut,
     monthOptions,
     pagibigContribution,
     sssContribution,
@@ -133,7 +134,9 @@ function initialSssOverride(activeDtr: ActiveDtr | null | undefined): string {
     return activeDtr.sssDeduction;
 }
 
-function initialPagibigOverride(activeDtr: ActiveDtr | null | undefined): string {
+function initialPagibigOverride(
+    activeDtr: ActiveDtr | null | undefined,
+): string {
     if (!activeDtr || !activeDtr.pagibigDeduction) {
         return '';
     }
@@ -206,8 +209,8 @@ export function useCalculateAttendance(
     const [selectedComputationDayKey, setSelectedComputationDayKey] = useState<
         string | null
     >(null);
-    const [manualSssOverride, setManualSssOverride] = useState<string>(
-        () => initialSssOverride(activeDtr),
+    const [manualSssOverride, setManualSssOverride] = useState<string>(() =>
+        initialSssOverride(activeDtr),
     );
     const [manualPagibigOverride, setManualPagibigOverride] = useState<string>(
         () => initialPagibigOverride(activeDtr),
@@ -293,6 +296,7 @@ export function useCalculateAttendance(
                 entry.timeIn,
                 scheduledDay.defaultTimeIn,
                 scheduledDay.graceMinutes,
+                entry.timeOut,
             ),
         };
     };
@@ -315,6 +319,10 @@ export function useCalculateAttendance(
 
         if (isHalfDayTimeIn(entry.timeIn, day.defaultTimeIn)) {
             return 'Half day';
+        }
+
+        if (isHalfDayEarlyOut(entry.timeIn, entry.timeOut)) {
+            return 'Half day (Early Out)';
         }
 
         const lateMinutes = getLateMinutes(
@@ -391,26 +399,24 @@ export function useCalculateAttendance(
         selectedEmployee?.dailyRate ?? '',
     );
 
-    const fullMonthlySss = sssContribution(
-        selectedEmployee?.monthlyRate ?? '',
-    );
-    const autoSss = selectedCalendarRange !== 'wholeMonth'
-        ? fullMonthlySss / 2
-        : fullMonthlySss;
-    const manualSss = manualSssOverride.trim() !== ''
-        ? Number(manualSssOverride)
-        : NaN;
-    const sssDeduction = Number.isFinite(manualSss)
-        ? manualSss
-        : autoSss;
+    const fullMonthlySss = sssContribution(selectedEmployee?.monthlyRate ?? '');
+    const autoSss =
+        selectedCalendarRange !== 'wholeMonth'
+            ? fullMonthlySss / 2
+            : fullMonthlySss;
+    const manualSss =
+        manualSssOverride.trim() !== '' ? Number(manualSssOverride) : NaN;
+    const sssDeduction = Number.isFinite(manualSss) ? manualSss : autoSss;
 
     const fullMonthlyPagibig = pagibigContribution();
-    const autoPagibig = selectedCalendarRange !== 'wholeMonth'
-        ? fullMonthlyPagibig / 2
-        : fullMonthlyPagibig;
-    const manualPagibig = manualPagibigOverride.trim() !== ''
-        ? Number(manualPagibigOverride)
-        : NaN;
+    const autoPagibig =
+        selectedCalendarRange !== 'wholeMonth'
+            ? fullMonthlyPagibig / 2
+            : fullMonthlyPagibig;
+    const manualPagibig =
+        manualPagibigOverride.trim() !== ''
+            ? Number(manualPagibigOverride)
+            : NaN;
     const pagibigDeduction = Number.isFinite(manualPagibig)
         ? manualPagibig
         : autoPagibig;
@@ -501,6 +507,7 @@ export function useCalculateAttendance(
             day.graceMinutes,
         );
         const isHalfDay = isHalfDayTimeIn(entry.timeIn, day.defaultTimeIn);
+        const isEarlyOut = isHalfDayEarlyOut(entry.timeIn, entry.timeOut);
         const attendanceStatusLabel = getAttendanceStatusLabel(day, entry);
         const hasBaseRate =
             entry.baseRate.trim() !== '' &&
@@ -521,6 +528,8 @@ export function useCalculateAttendance(
                 rateFormulaLabel = `${formatRateAmount(adjustedRate)} / 2 = ${formatRateAmount(entry.rate)} because ${entry.timeIn} is 3 hours or more after the scheduled ${scheduledTimeInLabel}.`;
             } else if (lateMinutes === null) {
                 rateFormulaLabel = `${formatRateAmount(adjustedRate)} before late deduction. Enter a valid time in to check lateness.`;
+            } else if (isEarlyOut) {
+                rateFormulaLabel = `${formatRateAmount(adjustedRate)} / 2 = ${formatRateAmount(entry.rate)} because ${entry.timeOut} is 4 hours or less the standard work hours in a day.`;
             } else {
                 lateMinutesLabel = formatMinuteCount(lateMinutes);
                 lateDeductionLabel = formatRateAmount(lateMinutes);

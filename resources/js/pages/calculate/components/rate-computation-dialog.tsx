@@ -15,13 +15,7 @@ type RateComputationDialogProps = {
     onOpenChange: (open: boolean) => void;
 };
 
-function DetailRow({
-    label,
-    value,
-}: {
-    label: string;
-    value: string;
-}) {
+function DetailRow({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex items-start justify-between gap-4">
             <p className="text-sm text-muted-foreground">{label}</p>
@@ -47,7 +41,8 @@ export default function RateComputationDialog({
                 <DialogHeader>
                     <DialogTitle>Daily computation</DialogTitle>
                     <DialogDescription>
-                        Breakdown for {computation.label}, {computation.weekday}.
+                        Breakdown for {computation.label}, {computation.weekday}
+                        .
                     </DialogDescription>
                 </DialogHeader>
 

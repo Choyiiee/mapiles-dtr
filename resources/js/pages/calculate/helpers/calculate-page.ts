@@ -26,12 +26,17 @@ export const SSS_MAX_CONTRIBUTION = 1750;
 
 export const PAGIBIG_FIXED_RATE = 200;
 
+/** Returns the fixed Pag-IBIG contribution amount (200). */
 export function pagibigContribution(): number {
     return PAGIBIG_FIXED_RATE;
 }
 
+/** Computes the SSS contribution based on monthly salary brackets. */
 export function sssContribution(monthlyRate: number | string | null): number {
-    const salary = typeof monthlyRate === 'number' ? monthlyRate : Number(monthlyRate ?? 0);
+    const salary =
+        typeof monthlyRate === 'number'
+            ? monthlyRate
+            : Number(monthlyRate ?? 0);
 
     if (!Number.isFinite(salary) || salary === 0) {
         return 0;
@@ -131,6 +136,7 @@ export type OvertimeSummaryBreakdown = {
     formulaLabel: string;
 };
 
+/** Creates a new AttendanceEntry with sensible defaults (timeIn/timeOut from the schedule, baseRate/rate from the employee's daily rate). */
 export function createAttendanceEntry(
     defaults: AttendanceDefaults = {},
 ): AttendanceEntry {
@@ -180,25 +186,31 @@ export const holidayOptions: Array<{ label: string; value: HolidayType }> = [
 export const daysPerPage = 7;
 export const breakMinutesPerShift = 60;
 export const workHoursPerDay = 8;
-export const halfDayThresholdMinutes = 180;
+export const halfDayLateThresholdMinutes = 180;
 export const overtimePremiumRate = 0.25;
+export const halfDayEarlyOutThresholdMinutes = 240;
 
+/** Pads a number to 2 digits (e.g. 3 → "03"). */
 function formatDatePart(value: number): string {
     return value.toString().padStart(2, '0');
 }
 
+/** Creates a "YYYY-MM-DD" key from year/month/day numbers. */
 function getDateKey(year: number, month: number, day: number): string {
     return `${year}-${formatDatePart(month)}-${formatDatePart(day)}`;
 }
 
+/** Extracts the day-of-month (last 2 chars) from a "YYYY-MM-DD" key. */
 function getDateKeyDay(dateKey: string): number {
     return Number(dateKey.slice(-2));
 }
 
+/** Truncates a time string to "HH:MM" (first 5 chars). */
 function normalizeTimeValue(value: string): string {
     return value.length >= 5 ? value.slice(0, 5) : value;
 }
 
+/** Parses "HH:MM" into total minutes from midnight. Returns null for invalid input. */
 function getMinutesFromTime(value: string): number | null {
     if (!/^\d{2}:\d{2}$/.test(value)) {
         return null;
@@ -213,10 +225,12 @@ function getMinutesFromTime(value: string): number | null {
     return hours * 60 + minutes;
 }
 
+/** Builds a unique storage key for an attendance entry: "employeeId:YYYY-MM-DD". */
 export function getAttendanceEntryKey(employeeId: string, dateKey: string) {
     return `${employeeId || 'unassigned'}:${dateKey}`;
 }
 
+/** Returns a human-readable label for a calendar-range option. */
 export function getAttendanceCalendarRangeLabel(
     value: AttendanceCalendarRange,
 ): string {
@@ -226,6 +240,7 @@ export function getAttendanceCalendarRangeLabel(
     );
 }
 
+/** Returns the start/end day-of-month for the given calendar range (whole month / first 2 weeks / last 2 weeks). */
 export function getAttendanceCalendarRangeDayBounds(
     year: number,
     month: number,
@@ -253,6 +268,7 @@ export function getAttendanceCalendarRangeDayBounds(
     }
 }
 
+/** Returns a display label like "January 1-15, 2026" or "January 2026". */
 export function getAttendanceCalendarPeriodLabel(
     year: number,
     month: number,
@@ -275,6 +291,7 @@ export function getAttendanceCalendarPeriodLabel(
     return `${monthLabel} ${startDay}-${endDay}, ${year}`;
 }
 
+/** Filters the full list of month days to only those within the selected calendar range (whole month / first 2 weeks / last 2 weeks). */
 export function filterMonthDaysByAttendanceCalendarRange(
     monthDays: MonthDay[],
     year: number,
@@ -294,6 +311,7 @@ export function filterMonthDaysByAttendanceCalendarRange(
     });
 }
 
+/** Returns the total minutes between timeIn and timeOut (handles overnight spans). Does NOT subtract the break. */
 export function getShiftDurationMinutes(
     timeIn: string,
     timeOut: string,
@@ -310,6 +328,7 @@ export function getShiftDurationMinutes(
         : 24 * 60 - timeInMinutes + timeOutMinutes;
 }
 
+/** Returns actual productive minutes: shift duration minus the 60-minute break deduction. */
 export function getWorkedMinutes(
     timeIn: string,
     timeOut: string,
@@ -323,6 +342,7 @@ export function getWorkedMinutes(
     return Math.max(0, totalWorkedMinutes - breakMinutesPerShift);
 }
 
+/** Returns overtime minutes: actual worked minutes minus scheduled worked minutes. */
 export function getOvertimeMinutes(
     workedMinutes: number | null,
     scheduledTimeIn: string,
@@ -340,6 +360,7 @@ export function getOvertimeMinutes(
     return Math.max(0, workedMinutes - scheduledWorkedMinutes);
 }
 
+/** Converts minutes to a human-friendly string like "7h 30m" or "8h". */
 export function formatWorkedDuration(totalMinutes: number | null): string {
     if (totalMinutes === null) {
         return '--';
@@ -355,6 +376,7 @@ export function formatWorkedDuration(totalMinutes: number | null): string {
     return `${hours}h ${minutes}m`;
 }
 
+/** Formats a decimal number of hours to 2 decimal places (e.g. 7.50). */
 export function formatDecimalHours(value: number): string {
     return value.toLocaleString('en-US', {
         minimumFractionDigits: 2,
@@ -362,6 +384,7 @@ export function formatDecimalHours(value: number): string {
     });
 }
 
+/** Returns the daily-rate multiplier for a holiday type (none=1, regular=2, special working=1.3). */
 export function getHolidayMultiplier(holidayType: HolidayType): number {
     switch (holidayType) {
         case 'regularHoliday':
@@ -374,6 +397,7 @@ export function getHolidayMultiplier(holidayType: HolidayType): number {
     }
 }
 
+/** Returns a human-readable label for a holiday type (e.g. "Regular Holiday"). */
 export function getHolidayLabel(holidayType: HolidayType): string {
     return (
         holidayOptions.find(
@@ -382,6 +406,7 @@ export function getHolidayLabel(holidayType: HolidayType): string {
     );
 }
 
+/** Formats a number as a PHP currency string (e.g. "PHP 1,234.56"). Returns "--" for invalid values. */
 export function formatRateAmount(value: number | string): string {
     const parsedValue = typeof value === 'number' ? value : Number(value);
 
@@ -395,6 +420,7 @@ export function formatRateAmount(value: number | string): string {
     })}`;
 }
 
+/** Builds a full overtime breakdown: base amount + 25% premium, with formula labels. */
 export function buildOvertimeSummary(
     totalMinutes: number,
     dailyRate: string,
@@ -438,6 +464,7 @@ export function buildOvertimeSummary(
     };
 }
 
+/** Applies the holiday multiplier to the base daily rate. E.g. regular holiday → rate * 2. */
 export function getAdjustedDailyRate(
     dailyRate: string,
     holidayType: HolidayType,
@@ -455,6 +482,7 @@ export function getAdjustedDailyRate(
     return (parsedDailyRate * getHolidayMultiplier(holidayType)).toFixed(2);
 }
 
+/** Returns late minutes after grace period: max(0, actualTimeIn - scheduledTimeIn - graceMinutes). Returns null if either time is invalid. */
 export function getLateMinutes(
     timeIn: string,
     scheduledTimeIn: string,
@@ -475,6 +503,7 @@ export function getLateMinutes(
     );
 }
 
+/** Returns true if the employee clocked in >= halfDayLateThresholdMinutes (currently 180) after their scheduled start — triggers half-day salary. */
 export function isHalfDayTimeIn(
     timeIn: string,
     scheduledTimeIn: string,
@@ -487,16 +516,28 @@ export function isHalfDayTimeIn(
     }
 
     return (
-        actualTimeInMinutes >= scheduledTimeInMinutes + halfDayThresholdMinutes
+        actualTimeInMinutes >=
+        scheduledTimeInMinutes + halfDayLateThresholdMinutes
     );
 }
 
+/** Returns true if the employee clocked out early enough that their total worked minutes fall below the half-day threshold — triggers half-day salary. */
+export function isHalfDayEarlyOut(timeIn: string, timeOut: string): boolean {
+    const workedMinutes = getWorkedMinutes(timeIn, timeOut);
+
+    if (workedMinutes === null) return false;
+
+    return workedMinutes <= halfDayEarlyOutThresholdMinutes;
+}
+
+/** Computes the final daily rate for a day: starts with adjustedDailyRate (base × holiday), then applies half-day or late penalty as appropriate. */
 export function getComputedDailyRate(
     baseDailyRate: string,
     holidayType: HolidayType,
     timeIn: string,
     scheduledTimeIn: string,
     graceMinutes: number,
+    timeOut: string,
 ): string {
     const adjustedDailyRate = getAdjustedDailyRate(baseDailyRate, holidayType);
 
@@ -514,6 +555,10 @@ export function getComputedDailyRate(
         return (parsedAdjustedDailyRate / 2).toFixed(2);
     }
 
+    if (isHalfDayEarlyOut(timeIn, timeOut)) {
+        return (parsedAdjustedDailyRate / 2).toFixed(2);
+    }
+
     const lateMinutes = getLateMinutes(timeIn, scheduledTimeIn, graceMinutes);
 
     if (lateMinutes === null) {
@@ -523,6 +568,7 @@ export function getComputedDailyRate(
     return Math.max(0, parsedAdjustedDailyRate - lateMinutes).toFixed(2);
 }
 
+/** Inverse of getAdjustedDailyRate: divides the given rate by the holiday multiplier to recover the original base rate. Used when loading a stored entry so the base rate stays consistent regardless of holiday. */
 export function getBaseDailyRate(
     rate: string,
     holidayType: HolidayType,
@@ -540,6 +586,7 @@ export function getBaseDailyRate(
     return (parsedRate / getHolidayMultiplier(holidayType)).toFixed(2);
 }
 
+/** Builds an array of MonthDay objects for every calendar day in the given month/year that matches the employee's schedule (by day-of-week). Non-working days are excluded. */
 export function buildMonthDays(
     year: number,
     month: number,
