@@ -189,6 +189,8 @@ export const workHoursPerDay = 8;
 export const halfDayLateThresholdMinutes = 180;
 export const overtimePremiumRate = 0.25;
 export const halfDayEarlyOutThresholdMinutes = 240;
+export const LUNCH_START_MINUTES = 720; // 12:00
+export const LUNCH_END_MINUTES = 780; // 13:00
 
 /** Pads a number to 2 digits (e.g. 3 → "03"). */
 function formatDatePart(value: number): string {
@@ -328,18 +330,41 @@ export function getShiftDurationMinutes(
         : 24 * 60 - timeInMinutes + timeOutMinutes;
 }
 
-/** Returns actual productive minutes: shift duration minus the 60-minute break deduction. */
+/** Returns break minutes to deduct: 60 if the worked range overlaps with the lunch break window (12:00-13:00), 0 otherwise. */
+export function getLunchBreakMinutes(
+    timeIn: string,
+    timeOut: string,
+): number {
+    const timeInMinutes = getMinutesFromTime(timeIn);
+    const timeOutMinutes = getMinutesFromTime(timeOut);
+
+    if (timeInMinutes === null || timeOutMinutes === null) {
+        return breakMinutesPerShift;
+    }
+
+    if (timeOutMinutes < timeInMinutes) {
+        return 0;
+    }
+
+    const overlapsLunch =
+        timeInMinutes < LUNCH_END_MINUTES &&
+        LUNCH_START_MINUTES < timeOutMinutes;
+
+    return overlapsLunch ? breakMinutesPerShift : 0;
+}
+
+/** Returns actual productive minutes: shift duration minus the lunch break deduction (if applicable). */
 export function getWorkedMinutes(
     timeIn: string,
     timeOut: string,
 ): number | null {
-    const totalWorkedMinutes = getShiftDurationMinutes(timeIn, timeOut);
+    const totalMinutes = getShiftDurationMinutes(timeIn, timeOut);
 
-    if (totalWorkedMinutes === null) {
+    if (totalMinutes === null) {
         return null;
     }
 
-    return Math.max(0, totalWorkedMinutes - breakMinutesPerShift);
+    return Math.max(0, totalMinutes - getLunchBreakMinutes(timeIn, timeOut));
 }
 
 /** Returns overtime minutes: actual worked minutes minus scheduled worked minutes. */

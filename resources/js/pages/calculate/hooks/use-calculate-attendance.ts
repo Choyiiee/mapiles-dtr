@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { store as calculateStore } from '@/routes/calculate';
 import { index as summaryIndex } from '@/routes/summary';
 import {
-    breakMinutesPerShift,
     buildMonthDays,
     buildOvertimeSummary,
     createAttendanceEntry,
@@ -19,6 +18,7 @@ import {
     getHolidayLabel,
     getHolidayMultiplier,
     getLateMinutes,
+    getLunchBreakMinutes,
     getOvertimeMinutes,
     getShiftDurationMinutes,
     getWorkedMinutes,
@@ -27,6 +27,10 @@ import {
     monthOptions,
     pagibigContribution,
     sssContribution,
+    SSS_BASE_SALARY,
+    SSS_BASE_CONTRIBUTION,
+    SSS_INCREMENT_STEP,
+    SSS_INCREMENT_AMOUNT,
     type ActiveDtr,
     type AttendanceCalendarRange,
     type AttendanceEntry,
@@ -502,6 +506,7 @@ export function useCalculateAttendance(
             day.defaultTimeIn,
             day.graceMinutes,
         );
+        const actualBreakMinutes = getLunchBreakMinutes(entry.timeIn, entry.timeOut);
         const isHalfDay = isHalfDayTimeIn(entry.timeIn, day.defaultTimeIn);
         const isEarlyOut = isHalfDayEarlyOut(entry.timeIn, entry.timeOut);
         const attendanceStatusLabel = getAttendanceStatusLabel(day, entry);
@@ -548,12 +553,14 @@ export function useCalculateAttendance(
             breakDurationLabel:
                 shiftDuration === null
                     ? '--'
-                    : formatWorkedDuration(breakMinutesPerShift),
+                    : formatWorkedDuration(actualBreakMinutes),
             workedDurationLabel: formatWorkedDuration(workedMinutes),
             timeFormulaLabel:
                 shiftDuration === null || workedMinutes === null
                     ? `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. Enter both time in and time out to compute hours worked.`
-                    : `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. ${entry.timeIn} to ${entry.timeOut} = ${formatWorkedDuration(shiftDuration)} minus ${formatWorkedDuration(breakMinutesPerShift)} break = ${formatWorkedDuration(workedMinutes)}.`,
+                    : actualBreakMinutes > 0
+                        ? `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. ${entry.timeIn} to ${entry.timeOut} = ${formatWorkedDuration(shiftDuration)} minus ${formatWorkedDuration(actualBreakMinutes)} lunch break = ${formatWorkedDuration(workedMinutes)}.`
+                        : `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. ${entry.timeIn} to ${entry.timeOut} = ${formatWorkedDuration(shiftDuration)} (no lunch break deduction).`,
             holidayLabel: getHolidayLabel(entry.holidayType),
             holidayAdjustmentLabel: getHolidayAdjustmentLabel(
                 entry.holidayType,
