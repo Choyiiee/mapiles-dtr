@@ -77,7 +77,7 @@ export default function DailyAttendanceTableRow({
                 >
                     <SelectTrigger
                         id={`desktop-holiday-type-${day.key}`}
-                        className="min-w-[210px]"
+                        className="min-w-[150px]"
                     >
                         <SelectValue />
                     </SelectTrigger>
@@ -109,12 +109,12 @@ export default function DailyAttendanceTableRow({
                 </label>
             </td>
             <td className="px-3 py-3 align-middle">
-                <div className="inline-flex h-10 min-w-[96px] items-center rounded-md border bg-muted/30 px-3 text-sm font-medium text-foreground">
+                <div className="inline-flex h-10 min-w-[80px] items-center rounded-md border bg-muted/30 px-3 text-sm font-medium text-foreground">
                     {workedDuration}
                 </div>
             </td>
             <td className="px-3 py-3 align-middle">
-                <div className="flex min-w-[320px] items-center gap-2">
+                <div className="flex min-w-[200px] items-center gap-2">
                     <Input
                         id={`desktop-rate-${day.key}`}
                         type="text"

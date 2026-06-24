@@ -41,7 +41,7 @@ export default function DailyAttendanceRow({
         : formatWorkedDuration(getWorkedMinutes(entry.timeIn, entry.timeOut));
 
     return (
-        <div className="space-y-4 rounded-lg border p-4 md:hidden">
+        <div className="space-y-4 rounded-lg border p-4 lg:hidden">
             <div className="flex items-start justify-between gap-3">
                 <div>
                     <p className="font-medium text-foreground">{day.label}</p>
@@ -140,10 +140,11 @@ export default function DailyAttendanceRow({
                         <Button
                             type="button"
                             variant="outline"
-                            className="sm:w-auto"
+                            size="sm"
+                            className="w-full sm:w-auto"
                             onClick={onCheckComputation}
                         >
-                            Check computation
+                            Check
                         </Button>
                     </div>
                 </div>

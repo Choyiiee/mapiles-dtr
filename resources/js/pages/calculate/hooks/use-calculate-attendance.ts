@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { store as calculateStore } from '@/routes/calculate';
 import { index as summaryIndex } from '@/routes/summary';
 import {
-    breakMinutesPerShift,
     buildMonthDays,
     buildOvertimeSummary,
     createAttendanceEntry,
@@ -19,10 +18,12 @@ import {
     getHolidayLabel,
     getHolidayMultiplier,
     getLateMinutes,
+    getLunchBreakMinutes,
     getOvertimeMinutes,
     getShiftDurationMinutes,
     getWorkedMinutes,
     isHalfDayTimeIn,
+    isHalfDayEarlyOut,
     monthOptions,
     pagibigContribution,
     sssContribution,
@@ -134,7 +135,9 @@ function initialSssOverride(activeDtr: ActiveDtr | null | undefined): string {
     return activeDtr.sssDeduction;
 }
 
-function initialPagibigOverride(activeDtr: ActiveDtr | null | undefined): string {
+function initialPagibigOverride(
+    activeDtr: ActiveDtr | null | undefined,
+): string {
     if (!activeDtr || !activeDtr.pagibigDeduction) {
         return '';
     }
@@ -207,8 +210,8 @@ export function useCalculateAttendance(
     const [selectedComputationDayKey, setSelectedComputationDayKey] = useState<
         string | null
     >(null);
-    const [manualSssOverride, setManualSssOverride] = useState<string>(
-        () => initialSssOverride(activeDtr),
+    const [manualSssOverride, setManualSssOverride] = useState<string>(() =>
+        initialSssOverride(activeDtr),
     );
     const [manualPagibigOverride, setManualPagibigOverride] = useState<string>(
         () => initialPagibigOverride(activeDtr),
@@ -294,6 +297,7 @@ export function useCalculateAttendance(
                 entry.timeIn,
                 scheduledDay.defaultTimeIn,
                 scheduledDay.graceMinutes,
+                entry.timeOut,
             ),
         };
     };
@@ -316,6 +320,10 @@ export function useCalculateAttendance(
 
         if (isHalfDayTimeIn(entry.timeIn, day.defaultTimeIn)) {
             return 'Half day';
+        }
+
+        if (isHalfDayEarlyOut(entry.timeIn, entry.timeOut)) {
+            return 'Half day (Early Out)';
         }
 
         const lateMinutes = getLateMinutes(
@@ -392,26 +400,24 @@ export function useCalculateAttendance(
         selectedEmployee?.dailyRate ?? '',
     );
 
-    const fullMonthlySss = sssContribution(
-        selectedEmployee?.monthlyRate ?? '',
-    );
-    const autoSss = selectedCalendarRange !== 'wholeMonth'
-        ? fullMonthlySss / 2
-        : fullMonthlySss;
-    const manualSss = manualSssOverride.trim() !== ''
-        ? Number(manualSssOverride)
-        : NaN;
-    const sssDeduction = Number.isFinite(manualSss)
-        ? manualSss
-        : autoSss;
+    const fullMonthlySss = sssContribution(selectedEmployee?.monthlyRate ?? '');
+    const autoSss =
+        selectedCalendarRange !== 'wholeMonth'
+            ? fullMonthlySss / 2
+            : fullMonthlySss;
+    const manualSss =
+        manualSssOverride.trim() !== '' ? Number(manualSssOverride) : NaN;
+    const sssDeduction = Number.isFinite(manualSss) ? manualSss : autoSss;
 
     const fullMonthlyPagibig = pagibigContribution();
-    const autoPagibig = selectedCalendarRange !== 'wholeMonth'
-        ? fullMonthlyPagibig / 2
-        : fullMonthlyPagibig;
-    const manualPagibig = manualPagibigOverride.trim() !== ''
-        ? Number(manualPagibigOverride)
-        : NaN;
+    const autoPagibig =
+        selectedCalendarRange !== 'wholeMonth'
+            ? fullMonthlyPagibig / 2
+            : fullMonthlyPagibig;
+    const manualPagibig =
+        manualPagibigOverride.trim() !== ''
+            ? Number(manualPagibigOverride)
+            : NaN;
     const pagibigDeduction = Number.isFinite(manualPagibig)
         ? manualPagibig
         : autoPagibig;
@@ -501,7 +507,9 @@ export function useCalculateAttendance(
             day.defaultTimeIn,
             day.graceMinutes,
         );
+        const actualBreakMinutes = getLunchBreakMinutes(entry.timeIn, entry.timeOut);
         const isHalfDay = isHalfDayTimeIn(entry.timeIn, day.defaultTimeIn);
+        const isEarlyOut = isHalfDayEarlyOut(entry.timeIn, entry.timeOut);
         const attendanceStatusLabel = getAttendanceStatusLabel(day, entry);
         const hasBaseRate =
             entry.baseRate.trim() !== '' &&
@@ -522,6 +530,8 @@ export function useCalculateAttendance(
                 rateFormulaLabel = `${formatRateAmount(adjustedRate)} / 2 = ${formatRateAmount(entry.rate)} because ${entry.timeIn} is 3 hours or more after the scheduled ${scheduledTimeInLabel}.`;
             } else if (lateMinutes === null) {
                 rateFormulaLabel = `${formatRateAmount(adjustedRate)} before late deduction. Enter a valid time in to check lateness.`;
+            } else if (isEarlyOut) {
+                rateFormulaLabel = `${formatRateAmount(adjustedRate)} / 2 = ${formatRateAmount(entry.rate)} because ${entry.timeOut} is 4 hours or less the standard work hours in a day.`;
             } else {
                 lateMinutesLabel = formatMinuteCount(lateMinutes);
                 lateDeductionLabel = formatRateAmount(lateMinutes);
@@ -544,12 +554,14 @@ export function useCalculateAttendance(
             breakDurationLabel:
                 shiftDuration === null
                     ? '--'
-                    : formatWorkedDuration(breakMinutesPerShift),
+                    : formatWorkedDuration(actualBreakMinutes),
             workedDurationLabel: formatWorkedDuration(workedMinutes),
             timeFormulaLabel:
                 shiftDuration === null || workedMinutes === null
                     ? `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. Enter both time in and time out to compute hours worked.`
-                    : `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. ${entry.timeIn} to ${entry.timeOut} = ${formatWorkedDuration(shiftDuration)} minus ${formatWorkedDuration(breakMinutesPerShift)} break = ${formatWorkedDuration(workedMinutes)}.`,
+                    : actualBreakMinutes > 0
+                        ? `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. ${entry.timeIn} to ${entry.timeOut} = ${formatWorkedDuration(shiftDuration)} minus ${formatWorkedDuration(actualBreakMinutes)} lunch break = ${formatWorkedDuration(workedMinutes)}.`
+                        : `Scheduled shift: ${scheduledTimeInLabel} to ${day.defaultTimeOut || '--'}. ${entry.timeIn} to ${entry.timeOut} = ${formatWorkedDuration(shiftDuration)} (no lunch break deduction).`,
             holidayLabel: getHolidayLabel(entry.holidayType),
             holidayAdjustmentLabel: getHolidayAdjustmentLabel(
                 entry.holidayType,
