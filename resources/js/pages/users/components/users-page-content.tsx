@@ -128,7 +128,7 @@ export default function UsersPageContent({
                                     <tbody className="divide-y divide-border">
                                         {users.map((user) => (
                                             <tr key={user.id}>
-                                                <td className="py-4 pr-4 align-top font-medium text-foreground">
+                                                <td className="py-4 pr-4 align-middle font-medium text-foreground">
                                                     {user.name}
                                                     {isCurrentUser(user) && (
                                                         <span className="ml-2 text-xs text-muted-foreground">
@@ -136,13 +136,13 @@ export default function UsersPageContent({
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-4 align-top text-muted-foreground">
+                                                <td className="px-4 py-4 align-middle text-muted-foreground">
                                                     {user.email}
                                                 </td>
-                                                <td className="px-4 py-4 align-top capitalize text-foreground">
+                                                <td className="px-4 py-4 align-middle capitalize text-foreground">
                                                     {user.role}
                                                 </td>
-                                                <td className="px-4 py-4 align-top">
+                                                <td className="px-4 py-4 align-middle">
                                                     <Badge
                                                         className={`capitalize ${statusColor(user.status)}`}
                                                     >
@@ -150,7 +150,7 @@ export default function UsersPageContent({
                                                     </Badge>
                                                 </td>
                                                 {canManage && (
-                                                    <td className="px-4 py-4 align-top">
+                                                    <td className="px-4 py-4 align-middle">
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <Select
                                                                 value={
